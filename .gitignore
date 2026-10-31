@@ -1,0 +1,7 @@
+# bitbake-setup の venv
+/bitbake-setup-venv/
+# bitbake-setup が作るレイヤー・ビルド・ダウンロード・sstate（数十〜百GB 以上）
+/bitbake-builds/
+# 実行ログ
+/logs/
+*.log
