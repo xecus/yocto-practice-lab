@@ -1,4 +1,4 @@
-# yocto-practice
+# yocto-practice-lab
 
 Yocto Project（Wrynose 6.0 LTS）で QEMU の aarch64 マシン `qemuarm64` 向けのイメージを作り、組み込み Linux の作り方を章ごとに試す実験環境。
 
@@ -63,3 +63,8 @@ Wrynose の公式の目安は「RAM 32GB、ディスク 140GB」（[System Requi
 
 このリポジトリのスクリプトと設定ファイルは [MIT License](LICENSE)。
 セットアップで取得する BitBake・OpenEmbedded-Core・meta-yocto などは含まれておらず、それぞれのライセンスに従う。
+
+## 注意
+
+このリポジトリは個人の学習用で、Yocto Project・OpenEmbedded・Arm・Raspberry Pi の公式のプロジェクトではない。
+Yocto Project は Linux Foundation の商標。

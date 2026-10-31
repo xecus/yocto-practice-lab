@@ -29,6 +29,10 @@ bitbake-config-build enable-fragment machine/raspberrypi4-64
 ENABLE_UART = "1"
 ```
 
+- MACHINE が推奨パッケージとして Wi-Fi のファームウェア（`linux-firmware-rpidistro-bcm43455` など）を入れようとする。このレシピは `LICENSE_FLAGS = "synaptics-killswitch"` なので、`LICENSE_FLAGS_ACCEPTED = "synaptics-killswitch"` がないと入らない（meta-raspberrypi の `docs/ipcompliance.md`）。ライセンスを読んでから決める
+
+<!-- TODO: LICENSE_FLAGS_ACCEPTED なしでビルドしたとき、警告で済むか、エラーになるか -->
+
 ```sh
 bitbake core-image-minimal
 ls tmp/deploy/images/raspberrypi4-64/
@@ -40,13 +44,15 @@ ls tmp/deploy/images/raspberrypi4-64/
 
 ## 2. イメージの中身を見る（SD カードなしでできる）
 
+wic は 7 章と同じく `oe-run-native wic-native` で使う。
+
 ```sh
 W=tmp/deploy/images/raspberrypi4-64/core-image-minimal-raspberrypi4-64.rootfs.wic.bz2
 bunzip2 -k $W
-wic ls ${W%.bz2}
-wic ls ${W%.bz2}:1
-wic cp ${W%.bz2}:1/config.txt .
-wic cp ${W%.bz2}:1/cmdline.txt .
+oe-run-native wic-native wic ls ${W%.bz2}
+oe-run-native wic-native wic ls ${W%.bz2}:1
+oe-run-native wic-native wic cp ${W%.bz2}:1/config.txt .
+oe-run-native wic-native wic cp ${W%.bz2}:1/cmdline.txt .
 ```
 
 p1（FAT）に入っているはずのもの:
@@ -65,9 +71,13 @@ p1（FAT）に入っているはずのもの:
 ## 3. SD カードに書き込んで起動する
 
 ```sh
-sudo bmaptool copy $W /dev/sdX      # sdX は lsblk で確かめる
+sudo apt-get install bmap-tools picocom
+sudo bmaptool copy $W /dev/sdX      # sdX は lsblk で確かめる。.wic.bmap を自動で使う
 sudo picocom -b 115200 /dev/ttyUSB0
 ```
+
+- `bmaptool` は `.wic.bmap` に書かれた、データのあるブロックだけを書き込むので、`dd` より速い
+- 書き込み先を間違えるとホストのディスクを壊す。`lsblk` で、SD カードを挿す前と後を比べて決める
 
 <!-- TODO: 起動ログを logs/boot-rpi4-direct.log に保存。Booting Linux on physical CPU の MIDR と CPU features を、boot-lab の --cpu a72 と比べる。EL（armstub は EL2 で渡すはず） -->
 

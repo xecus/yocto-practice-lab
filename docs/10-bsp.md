@@ -11,7 +11,7 @@
 | レイヤー | openembedded-core | meta-yocto-bsp | meta-raspberrypi | meta-raspberrypi |
 | tune | cortexa57 | armv8a-crc | cortexa72-nocrypto | cortexa76 |
 | カーネル | linux-yocto 6.18.54 | linux-yocto 6.18.54 | linux-raspberrypi 6.18.33 | linux-raspberrypi 6.18.33 |
-| デバイスツリー | QEMU が作る | ファームウェア（UEFI）が渡す | `bcm2711-rpi-4-b.dtb` など | `bcm2712-rpi-5-b.dtb` など |
+| デバイスツリー | QEMU が作る | ファームウェアが UEFI で渡す（QEMU では、U-Boot が QEMU の作った DTB を渡す） | `bcm2711-rpi-4-b.dtb` など | `bcm2712-rpi-5-b.dtb` など |
 | ブートローダー | なし（`-kernel`） | U-Boot → UEFI → GRUB / systemd-boot | GPU のファームウェア（U-Boot は任意） | 同じ |
 | EL3 | なし（QEMU） | なし（QEMU） | `armstub8-gic.bin` | ファームウェアに内蔵（未確認） |
 | シリアル | `ttyAMA0` | `ttyAMA0` ほか多数 | `ttyS0` | `ttyAMA10` |
@@ -45,7 +45,7 @@ bitbake core-image-minimal
 runqemu genericarm64 nographic slirp
 ```
 
-`genericarm64.conf` の QEMU の設定は、5 章で自分で組もうとしたもの（U-Boot から起動し、`-kernel` を渡さない）と同じ。
+`genericarm64.conf` の QEMU の設定は、5 章で使うもの（U-Boot から起動し、`QB_DEFAULT_KERNEL = "none"` で `-kernel` を渡さない）と同じ。
 
 ```
 QB_DEFAULT_BIOS ?= "u-boot.bin"

@@ -38,10 +38,19 @@ ls tmp/work/
 ls tmp/work/cortexa57-poky-linux/busybox/1.37.0/
 ```
 
+作業場所（`WORKDIR`）は `tmp/work/<アーキ>/<レシピ名>/<版>/`。`bitbake.conf` の定義:
+
+```
+WORKDIR = "${BASE_WORKDIR}/${MULTIMACH_TARGET_SYS}/${PN}/${PV}"
+UNPACKDIR ??= "${WORKDIR}/sources"
+S = "${UNPACKDIR}/${BP}"
+B = "${S}"
+```
+
 | ディレクトリ | 中身 | aarch64-boot-lab で対応するもの |
 |---|---|---|
-| `sources/` | 展開したソース（`S`）。パッチ適用後 | `busybox/`（git clone したもの） |
-| `build/` | ビルドの出力（`B`）。BusyBox は `S` と同じ場所でビルドする | `busybox/` |
+| `sources/` | `do_unpack` の展開先（`UNPACKDIR`）。`SRC_URI` の `file://` もここに入る | — |
+| `sources/busybox-1.37.0/` | ソース（`S`）。パッチ適用後。BusyBox はここでビルドする（`B = S`）ので、`.config` もここにできる | `busybox/`（git clone したもの） |
 | `image/` | `do_install` の出力（`D`） | `busybox/_install/` |
 | `packages-split/` | パッケージごとに分けたファイル | — |
 | `temp/log.do_<タスク>` | タスクのログ | 端末に出た `make` の出力 |
@@ -80,7 +89,7 @@ do_fetch → do_unpack → do_patch → do_configure → do_compile → do_insta
 | タスク | やること | aarch64-boot-lab で対応するもの |
 |---|---|---|
 | `do_fetch` | ソースを `DL_DIR` に取得する | `git clone` / `wget` |
-| `do_unpack` | `WORKDIR` に展開する | `tar xf` |
+| `do_unpack` | `UNPACKDIR`（`WORKDIR/sources`）に展開する | `tar xf` |
 | `do_patch` | パッチを当てる | — |
 | `do_configure` | 設定（BusyBox は `defconfig` と `.cfg` から `.config` を作る） | `make defconfig` + `make menuconfig` |
 | `do_compile` | ビルド | `make` |
@@ -115,10 +124,10 @@ grep -B 30 '^SRC_URI=' busybox.env | grep '^#'
 
 ## 5. BusyBox の設定を aarch64-boot-lab と比べる
 
-aarch64-boot-lab は `defconfig` に `CONFIG_STATIC=y`・`tc` 無効を足した。Yocto の BusyBox は、レシピの `defconfig` に `.cfg`（`init.cfg`、`getopts.cfg` など）を重ねて作る。
+aarch64-boot-lab は `defconfig` に `CONFIG_STATIC=y`・`tc` 無効を足した。Yocto の BusyBox は、レシピの `defconfig` に、`SRC_URI` にある `.cfg`（`init.cfg`、`getopts.cfg` など）を `merge_config.sh` で重ねて作る（`busybox.inc` の `do_configure`）。
 
 ```sh
-B=tmp/work/cortexa57-poky-linux/busybox/1.37.0/build
+B=tmp/work/cortexa57-poky-linux/busybox/1.37.0/sources/busybox-1.37.0
 diff <(grep '^CONFIG_' ~/aarch64-boot-lab/configs/busybox-1.32.config | sort) \
      <(grep '^CONFIG_' $B/.config | sort) | head -50
 ```

@@ -30,14 +30,14 @@ bitbake -e core-image-minimal | grep -E '^(IMAGE_FSTYPES|IMAGE_ROOTFS_SIZE|IMAGE
 
 wic は `.wks`（kickstart 形式）でディスクの構成を決める。openembedded-core の例は `meta/files/wic/` にある（`directdisk.wks`、`sdimage-bootpart.wks`、`qemuriscv.wks` など）。
 
-5 章で作った `qemuarm64-uboot.wks` を、aarch64-boot-lab の `make-rootdisk.sh` と比べる。
+5 章で作った `qemuarm64-uboot.wks` は、aarch64-boot-lab の `make-rootdisk.sh` に合わせてある（MBR、p1 は 1MiB の位置から 64MiB の ext4）。
 
-<!-- TODO: make-rootdisk.sh のパーティションの大きさ・形式を写して、wks を合わせる -->
+<!-- TODO: できた wic と rootdisk-6.18.img のパーティション表（fdisk -l）を並べて比べる -->
 
 | オプション | 意味 |
 |---|---|
 | `--source rootfs` | イメージの rootfs を入れる |
-| `--source bootimg-partition` | `IMAGE_BOOT_FILES` のファイルを入れる |
+| `--source bootimg_partition` | `IMAGE_BOOT_FILES` のファイルを入れる |
 | `--fstype` | `ext4` / `vfat` など |
 | `--label` | ファイルシステムのラベル |
 | `--align` | 先頭の位置を KB 単位でそろえる |
@@ -47,16 +47,19 @@ wic は `.wks`（kickstart 形式）でディスクの構成を決める。opene
 
 ## 3. wic の中身を見る
 
+Wrynose では、wic は openembedded-core の `scripts/` から外れて、独立したレシピ（`meta/recipes-support/wic/wic_0.3.1.bb`、ソースは `git.yoctoproject.org/wic.git`）になった。ビルドディレクトリで `wic` と打っても使えないので、`wic-native` として使う。
+
 ```sh
+bitbake wic-native wic-tools
 W=tmp/deploy/images/qemuarm64/core-image-minimal-qemuarm64.rootfs.wic
-wic ls $W                 # パーティションの一覧
-wic ls $W:1               # p1 の中身
-wic cp $W:1/boot.scr .    # 取り出す
+oe-run-native wic-native wic ls $W                 # パーティションの一覧
+oe-run-native wic-native wic ls $W:1               # p1 の中身
+oe-run-native wic-native wic cp $W:1/boot.scr .    # 取り出す
 ```
 
 aarch64-boot-lab では `fdisk -l` と `mount -o loop` で確かめていたことが、root 権限なしでできる。
 
-<!-- TODO: 出力 -->
+<!-- TODO: oe-run-native で動くか確かめる。ext4 / vfat の中を読むための debugfs・mtools が wic-native の sysroot にあるか（wic-tools を先にビルドしている） -->
 
 ## 4. initramfs
 

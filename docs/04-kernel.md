@@ -39,7 +39,7 @@ diff <(grep '^CONFIG_' ~/aarch64-boot-lab/configs/linux-6.18.53.config | sort) \
 ```
 
 見るところ:
-- 有効なドライバの数（`defconfig` は多くの SoC のドライバを有効にしている。linux-yocto の qemuarm64 は QEMU に必要なものに絞っている）
+- 有効なドライバの数（`defconfig` は多くの SoC のドライバを有効にしている。linux-yocto の qemuarm64 で、どこまで減るかを見る）
 - `CONFIG_DEBUG_INFO`（9 章の gdb で使う）
 - `CONFIG_NFSD`（`qemu.inc` で `features/nfsd/nfsd-enable.scc` が足されている）
 

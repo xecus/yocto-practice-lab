@@ -41,15 +41,17 @@ QB_SMP ?= "-smp 4"
 `meta-practice/conf/machine/` に、aarch64-boot-lab の CPU に合わせた MACHINE を作る。
 
 ```
-# meta-practice/conf/machine/practice-a53.conf（案）
+# meta-practice/conf/machine/practice-a72.conf（案）
 require conf/machine/qemuarm64.conf
 MACHINEOVERRIDES =. "qemuarm64:"
 
-DEFAULTTUNE = "cortexa53"
-require conf/machine/include/arm/armv8a/tune-cortexa53.inc
-QB_CPU = "-cpu cortex-a53"
+DEFAULTTUNE = "cortexa72-nocrypto"
+require conf/machine/include/arm/armv8a/tune-cortexa72.inc
+QB_CPU = "-cpu cortex-a72"
 QB_SMP = "-smp 1"
 ```
+
+- `MACHINEOVERRIDES` に `qemuarm64` を入れるのは、linux-yocto の `COMPATIBLE_MACHINE` と `KBRANCH:qemuarm64` を効かせるため（MACHINE の名前が違うので、そのままでは `qemuarm64` にならない）
 
 <!-- TODO: tune-*.inc をあとから require して DEFAULTTUNE が切り替わるか確かめる。だめなら qemuarm64.conf を require せず、中身を写す -->
 
@@ -59,7 +61,7 @@ QB_SMP = "-smp 1"
 |---|---|---|---|
 | `practice-a53` | cortexa53（`armv8a/tune-cortexa53.inc`） | cortex-a53 | `--cpu a53`（既定） |
 | `practice-a55` | cortexa55（`armv8-2a/tune-cortexa55.inc`） | cortex-a55 | `--cpu a55` |
-| `practice-a72` | cortexa72（`armv8a/tune-cortexa72.inc`） | cortex-a72 | `--cpu a72` |
+| `practice-a72` | cortexa72-nocrypto（`armv8a/tune-cortexa72.inc`） | cortex-a72 | `--cpu a72` |
 | `practice-a76` | cortexa76（`armv8-2a/tune-cortexa76.inc`） | cortex-a76 | `--cpu a76` |
 | `practice-a710` | cortexa710（`armv9a/tune-cortexa710.inc`） | cortex-a710 | `--cpu a710` |
 
@@ -72,7 +74,7 @@ RAM 7GB では、5 つすべてでユーザーランドをビルドし直すの�
 ### MACHINE を切り替える
 
 ```sh
-bitbake-config-build enable-fragment machine/practice-a53
+bitbake-config-build enable-fragment machine/practice-a72
 bitbake core-image-minimal
 ```
 
@@ -80,13 +82,13 @@ bitbake core-image-minimal
 
 ## 4. 何がビルドし直しになるか
 
-tune が変わると、ターゲット向けのパッケージ（glibc、BusyBox など）は**すべて**ビルドし直しになる（`tmp/work/cortexa53-poky-linux/` のように、アーキのディレクトリが変わる）。ホスト向けのツール（`-native`、クロスコンパイラの大部分）は再利用される。
+tune が変わると、ターゲット向けのパッケージ（glibc、BusyBox など）は**すべて**ビルドし直しになる（`tmp/work/cortexa72-poky-linux/` のように、アーキのディレクトリが変わる）。ホスト向けのツール（`-native`、クロスコンパイラの大部分）は再利用される。
 
 ```sh
 bitbake core-image-minimal 2>&1 | grep 'Sstate summary'
 ```
 
-<!-- TODO: cortexa57 → cortexa53 のときの Sstate summary とビルド時間 -->
+<!-- TODO: cortexa57 → cortexa72-nocrypto のときの Sstate summary とビルド時間。アーキのディレクトリ名（-nocrypto が付くか）も確かめる -->
 
 QEMU の CPU（`QB_CPU`）だけ変えるなら、ビルドし直しは不要。
 

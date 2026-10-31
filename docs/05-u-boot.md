@@ -6,7 +6,7 @@ aarch64-boot-lab の `./run.sh uboot-rootdisk`（QEMU → U-Boot → rootdisk �
 
 ## 1. 1 章の起動との違い
 
-1 章の `runqemu qemuarm64` は、QEMU の `-kernel` にカーネルを直接渡していた（aarch64-boot-lab の `direct`）。U-Boot を通すには、次の 3 つが必要。
+1 章の `runqemu qemuarm64` は、QEMU の `-kernel` にカーネルを直接渡していた（aarch64-boot-lab の `direct`）。U-Boot を通すには、次の 4 つが必要。
 
 | 必要なもの | aarch64-boot-lab | Yocto |
 |---|---|---|
@@ -63,7 +63,7 @@ p1 に `Image` と `boot.scr`、p2 に rootfs を入れる。aarch64-boot-lab �
 `meta-practice/wic/qemuarm64-uboot.wks`:
 
 ```
-part /boot --source bootimg-partition --ondisk vda --fstype=ext4 --label boot   --active --align 1024 --size 64M
+part /boot --source bootimg_partition --ondisk vda --fstype=ext4 --label boot   --active --align 1024 --size 64M
 part /     --source rootfs            --ondisk vda --fstype=ext4 --label rootfs --align 1024
 ```
 
@@ -76,7 +76,8 @@ IMAGE_BOOT_FILES = "Image boot.scr"
 EXTRA_IMAGEDEPENDS += "u-boot"
 ```
 
-- `bootimg-partition` は `IMAGE_BOOT_FILES` に書いたファイルを `DEPLOY_DIR_IMAGE` から p1 にコピーする
+- `bootimg_partition` は `IMAGE_BOOT_FILES` に書いたファイルを `DEPLOY_DIR_IMAGE` から p1 にコピーする
+- プラグインの名前は `bootimg_partition`（アンダースコア）。openembedded-core の `sdimage-bootpart.wks` もこの名前。古い資料の `bootimg-partition`（ハイフン）は以前の名前
 - `EXTRA_IMAGEDEPENDS` で、イメージを作る前に U-Boot をビルド・deploy させる
 
 <!-- TODO: wic ls で p1 の中身を確かめる -->
@@ -92,22 +93,30 @@ part /boot --ondisk=vda --align 64 --size=100M --active --source bootimg-partiti
 part /     --ondisk=vda                                 --source rootfs            --fstype=ext4 --label root
 ```
 
-U-Boot の `distro_bootcmd` は `boot.scr` も `extlinux.conf` も探すので、どちらでも起動できる。この章では aarch64-boot-lab と同じ `boot.scr` を使い、6 章で extlinux と比べる。
+meta-arm の wks は古い名前の `bootimg-partition` のまま。wic が古い名前も受け付けるのかは、6 章で確かめる。
+
+U-Boot の標準ブート（bootstd）は `boot.scr` も `extlinux.conf` も探すので、どちらでも起動できる（aarch64-boot-lab の U-Boot 2024.01 も bootstd で `boot.scr` を見つけていた）。この章では aarch64-boot-lab と同じ `boot.scr` を使い、6 章で extlinux と比べる。
 
 ## 5. runqemu で U-Boot から起動する
 
 `runqemu` は `QB_DEFAULT_BIOS` があれば `-bios` を付け、カーネルがあれば `-kernel` を付ける（`scripts/runqemu` の `check_bios()` と `start_qemu()`）。aarch64-boot-lab で分かったとおり、`-kernel` を渡すと U-Boot は fw_cfg 経由の起動を先に選んでしまうので、カーネルは渡さない。
 
+カーネルを渡さない設定は `QB_DEFAULT_KERNEL = "none"`（`check_kernel()` は `none` なら何もしない）。meta-yocto-bsp の `genericarm64.conf` が同じ設定をしている（10 章）。
+
 `local.conf`:
 
 ```
 QB_DEFAULT_BIOS = "u-boot.bin"
+QB_DEFAULT_KERNEL = "none"
 QB_DEFAULT_FSTYPE = "wic"
 QB_FSINFO = "wic:no-kernel-in-fs"
 QB_ROOTFS_OPT = "-drive id=disk0,file=@ROOTFS@,if=none,format=raw -device virtio-blk-pci,drive=disk0"
 ```
 
-<!-- TODO: QB_FSINFO = "wic:no-kernel-in-fs" で -kernel が付かなくなるかを確かめる（meta-arm の qemuarm64-secureboot が使っている設定）。runqemu が実行した QEMU のコマンドラインを logs/ に残す -->
+- `QB_FSINFO = "wic:no-kernel-in-fs"` は名前に反して、カーネルを渡さない設定ではない。「wic の中にカーネルがない」という意味で、runqemu は wic を rootfs だけのイメージとして扱い、カーネルを探して `-kernel` を付けようとする。それを `QB_DEFAULT_KERNEL = "none"` で止める
+- `QB_FSINFO` を書かない場合、runqemu は wic を「カーネル入りの VM イメージ」として扱い、`-kernel` を付けない。どちらの書き方がよいかは試して決める
+
+<!-- TODO: runqemu が実行した QEMU のコマンドラインを logs/ に残し、-kernel が付いていないことを確かめる -->
 
 ```sh
 bitbake core-image-minimal
@@ -119,7 +128,7 @@ runqemu qemuarm64 nographic slirp wic
 aarch64-boot-lab の `logs/boot-uboot-rootdisk-6.18-*.log` と並べて比べる。
 
 - U-Boot の版（`U-Boot 2026.01` と `U-Boot 2024.01`）
-- `boot.scr` を読んだところ（`Found U-Boot script /boot.scr`）
+- `boot.scr` を読んだところ（aarch64-boot-lab では `** Booting bootflow 'virtio-blk#31.bootdev.part_1' with script`）
 - カーネルのコマンドライン（`Kernel command line:`）
 - `VFS: Mounted root (ext4 filesystem) on device 254:2.`
 - 例外レベル（どちらも EL1 のはず）

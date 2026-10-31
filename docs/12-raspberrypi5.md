@@ -39,6 +39,7 @@ bitbake-config-build enable-fragment machine/raspberrypi5
 bitbake core-image-minimal
 ```
 
+- Wi-Fi のファームウェアの `LICENSE_FLAGS` は 11 章と同じ
 - tune が `cortexa76` に変わるので、ユーザーランドはすべてビルドし直し
 - 8 章で `cortexa76` の MACHINE を作っていれば、それを使い回せるかもしれない
 

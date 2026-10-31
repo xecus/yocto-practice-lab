@@ -52,7 +52,7 @@ hbreak run_init_process
 continue
 ```
 
-<!-- TODO: カーネルの入口のアドレスを確かめる（aarch64-boot-lab の 6.18 は 0x40200000。QEMU の -kernel の置き方なので同じはず）。/init は initramfs がないので run_init_process ではなく、/sbin/init（sysvinit）になる -->
+<!-- TODO: カーネルの入口のアドレスを確かめる（aarch64-boot-lab の 6.18 は 0x40200000。QEMU の -kernel の置き方なので同じはず）。initramfs がないので do_populate_rootfs では何も展開されず、run_init_process は /sbin/init（sysvinit）を起動するところで止まるはず -->
 
 ```sh
 # 端末 2

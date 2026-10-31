@@ -74,11 +74,12 @@ aarch64-boot-lab で分かったことと比べる:
 | メモリ | `-m 1024`（BL2 が U-Boot を `0x60000000` に置くため） | `-m 1024`。U-Boot も `CONFIG_SYS_TEXT_BASE=0x60000000`（`u-boot/qemuarm64.cfg`） |
 | ファームウェア | `qemu_fw.bios`（`bl1.bin` の後ろに `fip.bin` を連結） | `flash.bin`（`bl1.bin` を先頭に、`fip.bin` を 256KB の位置に `dd`） |
 | BL33 | U-Boot | U-Boot（`TFA_UBOOT = "1"` → `BL33=${DEPLOY_DIR_IMAGE}/u-boot.bin`） |
-| BL32（Secure OS） | なし | **OP-TEE**（`TFA_SPD = "opteed"`、`MACHINE_FEATURES += "optee-ftpm"`） |
+| BL32（Secure OS） | なし | **OP-TEE**（`TFA_SPD = "opteed"`。`optee-os` の `tee-*_v2.bin` を `BL32` として FIP に入れる） |
 | CPU | 選べる（a53 / a55 / a72 / a76 / a710） | cortex-a57（qemuarm64 のまま） |
 | ブートの設定 | `boot.scr` | extlinux（wic の `bootloader --configfile`） |
 
 見どころ:
+- `QB_FSINFO = "wic:no-kernel-in-fs"` があり、`QB_DEFAULT_KERNEL = "none"` はない。runqemu の仕組み（5 章）からすると、`-kernel` も付くはず。そのとき U-Boot が fw_cfg のカーネルと extlinux のどちらで起動するかを確かめる
 - **`virtualization=on` がないので、Linux は EL1 で動くはず**（aarch64-boot-lab の TF-A 版は EL2）。dmesg の `CPU: All CPU(s) started at EL1` / `EL2` で確かめる
 - OP-TEE も一緒にビルドされるので、ビルドは重くなる
 
@@ -101,7 +102,10 @@ QB_DEFAULT_BIOS = "flash.bin"
 ```
 
 - `MACHINEOVERRIDES` に `qemuarm64-secureboot` を入れると、meta-arm の bbappend（`:qemuarm64-secureboot`）がそのまま効く
-- OP-TEE を外すには `TFA_SPD` を空にし、`MACHINE_FEATURES` から `optee-ftpm` を外す
+- OP-TEE は 2 か所から入ってくる。MACHINE の設定だけでは外せない
+  - `trusted-firmware-a-qemuarm64-secureboot.inc` が `TFA_SPD` を `=` で `opteed` にする（レシピの中の代入なので、MACHINE の `TFA_SPD = ""` は上書きされる）
+  - `trusted-firmware-a_%.bbappend` が、QEMU のマシン（`qemuall`）なら `DEPENDS:append = " optee-os"` と `EXTRA_OEMAKE:append` の `BL32=...` を足す。`qemuarm64-secureboot` を入れなくても、`qemuarm64.conf` を require すれば `qemuall` になるので足される
+- そのため、`meta-practice` に `trusted-firmware-a_%.bbappend` を作り、`TFA_SPD = ""`、`DEPENDS:remove = "optee-os"`、`EXTRA_OEMAKE:remove` で `BL32=...` を消す。`MACHINE_FEATURES` からは `optee-ftpm` を外す
 - `virtualization=on` を足して、Linux が EL2 で動くかを見る
 
 <!-- TODO: この案で動くか確かめる。OVERRIDES の書き方は試して直す -->

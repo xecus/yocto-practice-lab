@@ -55,10 +55,10 @@ cat tmp/work/*/example/0.1/temp/log.do_compile
 
 BusyBox のレシピは `.cfg`（設定の断片）を重ねて `.config` を作る（2 章を参照）。自分の `.cfg` を足して、アプレットを 1 つ増やす。
 
-足すアプレットの例: `CONFIG_TREE`（`tree` コマンド）。core-image-minimal に入っていないことを先に確かめる。
+足すアプレットの例: `CONFIG_TREE`（`tree` コマンド）。レシピの `defconfig` では `# CONFIG_TREE is not set` になっている。ビルドした `.config` でも無効なことを先に確かめる。
 
 ```sh
-grep CONFIG_TREE tmp/work/cortexa57-poky-linux/busybox/1.37.0/build/.config
+grep CONFIG_TREE tmp/work/cortexa57-poky-linux/busybox/1.37.0/sources/busybox-1.37.0/.config
 ```
 
 ファイルを作る。
@@ -92,7 +92,7 @@ CONFIG_TREE=y
 ```sh
 bitbake-layers show-appends busybox
 bitbake busybox
-grep CONFIG_TREE tmp/work/cortexa57-poky-linux/busybox/1.37.0/build/.config
+grep CONFIG_TREE tmp/work/cortexa57-poky-linux/busybox/1.37.0/sources/busybox-1.37.0/.config
 bitbake core-image-minimal
 runqemu qemuarm64 nographic slirp    # 起動して tree を実行する
 ```
