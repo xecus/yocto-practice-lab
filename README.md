@@ -25,16 +25,16 @@ Wrynose の公式の目安は「RAM 32GB、ディスク 140GB」（[System Requi
 | 章 | 内容 | aarch64-boot-lab で対応するもの |
 |---|---|---|
 | [1](docs/01-build-and-runqemu.md) | `bitbake-setup` で Poky を用意し、`core-image-minimal` をビルドして `runqemu` で起動する | `./run.sh direct`（QEMU → カーネル） |
-| 2 | ビルドの中身を見る（`tmp/work`、タスク、`bitbake -e`、sstate） | 手でビルドした `linux-*/` `busybox/` |
-| 3 | 自作レイヤーと `bbappend` の最小限 | `configs/` |
-| 4 | カーネルのカスタマイズ（config fragment、パッチ、版の切り替え） | `linux-<版>/` と `.config` |
-| 5 | U-Boot を入れる | `./run.sh uboot-rootdisk` |
-| 6 | TF-A を入れる | `./run.sh tfa-uboot-rootdisk` |
-| 7 | wic と initramfs | `make-bootdisk.sh` / `make-rootdisk.sh` |
-| 8 | 独自の MACHINE / DISTRO | `select-cpu.sh` |
-| 9 | デバッグ（gdb、ログ） | `debug-<版>.gdb`、`logs/` |
+| [2](docs/02-inside-the-build.md) | ビルドの中身を見る（`tmp/work`、タスク、`bitbake -e`、sstate） | 手でビルドした `linux-*/` `busybox/` |
+| [3](docs/03-layer-and-bbappend.md) | 自作レイヤーと `bbappend` の最小限 | `configs/` |
+| [4](docs/04-kernel.md) | カーネルのカスタマイズ（config fragment、パッチ、版の切り替え） | `linux-<版>/` と `.config` |
+| [5](docs/05-u-boot.md) | U-Boot を入れる | `./run.sh uboot-rootdisk` |
+| [6](docs/06-tf-a.md) | TF-A を入れる | `./run.sh tfa-uboot-rootdisk` |
+| [7](docs/07-wic-and-initramfs.md) | wic と initramfs | `make-bootdisk.sh` / `make-rootdisk.sh` |
+| [8](docs/08-machine-and-distro.md) | 独自の MACHINE / DISTRO | `select-cpu.sh` |
+| [9](docs/09-debug.md) | デバッグ（gdb、ログ） | `debug-<版>.gdb`、`logs/` |
 
-2 章以降はまだ書いていない。起動まわりができたら、レシピの書き方・パッケージ・ライセンス・SDK などに進む。
+2 章以降は下書き（手順はソースを読んで書き、出力はまだ確かめていない）。1 章から順に確かめて書き直す。起動まわりができたら、レシピの書き方・パッケージ・ライセンス・SDK などに進む。
 
 ## ディレクトリ構成
 
