@@ -65,7 +65,9 @@ QB_SMP = "-smp 1"
 
 チューニングのファイルは `openembedded-core/meta/conf/machine/include/arm/` にあり、aarch64-boot-lab の 5 つの CPU はすべてそろっている。
 
-RAM 7GB では、5 つすべてでユーザーランドをビルドし直すのは時間がかかる。まず a53 と a76 の 2 つでやる。
+RAM 7GB では、5 つすべてでユーザーランドをビルドし直すのは時間がかかる。まず **a72 と a76** の 2 つでやる。tune を 11・12 章の Raspberry Pi に合わせる（Pi 4 は `cortexa72-nocrypto`、Pi 5 は `cortexa76`）と、ユーザーランドのビルド結果を使い回せるかもしれない。
+
+<!-- TODO: practice-a72 の DEFAULTTUNE を cortexa72-nocrypto にしたとき、raspberrypi4-64 で sstate がどれだけ使われるか確かめる -->
 
 ### MACHINE を切り替える
 

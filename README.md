@@ -33,6 +33,9 @@ Wrynose の公式の目安は「RAM 32GB、ディスク 140GB」（[System Requi
 | [7](docs/07-wic-and-initramfs.md) | wic と initramfs | `make-bootdisk.sh` / `make-rootdisk.sh` |
 | [8](docs/08-machine-and-distro.md) | 独自の MACHINE / DISTRO | `select-cpu.sh` |
 | [9](docs/09-debug.md) | デバッグ（gdb、ログ） | `debug-<版>.gdb`、`logs/` |
+| [10](docs/10-bsp.md) | BSP を読む（qemuarm64・genericarm64・Raspberry Pi 4 / 5 の比較） | — |
+| [11](docs/11-raspberrypi4.md) | Raspberry Pi 4（meta-raspberrypi、UART、U-Boot、TF-A、カーネルの版の切り替え） | `--cpu a72`、`tfa-uboot-rootdisk` |
+| [12](docs/12-raspberrypi5.md) | Raspberry Pi 5（Pi 4 との違い） | `--cpu a76` |
 
 2 章以降は下書き（手順はソースを読んで書き、出力はまだ確かめていない）。1 章から順に確かめて書き直す。起動まわりができたら、レシピの書き方・パッケージ・ライセンス・SDK などに進む。
 
