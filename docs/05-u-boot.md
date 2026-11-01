@@ -6,7 +6,7 @@ aarch64-boot-lab の `./run.sh uboot-rootdisk`（QEMU → U-Boot → rootdisk �
 
 ## 1. 1 章の起動との違い
 
-1 章の `runqemu qemuarm64` は、QEMU の `-kernel` にカーネルを直接渡していた（aarch64-boot-lab の `direct`）。U-Boot を通すには、次の 4 つが必要。
+1 章の `runqemu` は、QEMU の `-kernel` にカーネルを直接渡していた（aarch64-boot-lab の `direct`）。U-Boot を通すには、次の 4 つが必要。
 
 | 必要なもの | aarch64-boot-lab | Yocto |
 |---|---|---|
@@ -37,7 +37,9 @@ ls -l tmp/deploy/images/qemuarm64/u-boot*
 
 `u-boot.inc` は、`UBOOT_ENV` を設定すると `${UBOOT_ENV}.cmd` を `mkimage -T script` で変換して deploy する（`UBOOT_ENV_SUFFIX = "scr"` のとき）。
 
-`meta-practice/recipes-bsp/u-boot/u-boot_%.bbappend`:
+ブートスクリプトはボードに依存するので、`meta-practice-bsp` に置く。
+
+`meta-practice-bsp/recipes-bsp/u-boot/u-boot_%.bbappend`:
 
 ```
 FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
@@ -60,14 +62,14 @@ booti ${kernel_addr_r} - ${fdtcontroladdr}
 
 p1 に `Image` と `boot.scr`、p2 に rootfs を入れる。aarch64-boot-lab の `make-rootdisk.sh` に合わせる（MBR、p1 は 1MiB の位置から 64MiB の ext4、ラベル `boot`）。
 
-`meta-practice/wic/qemuarm64-uboot.wks`:
+`meta-practice-bsp/wic/qemuarm64-uboot.wks`:
 
 ```
 part /boot --source bootimg_partition --ondisk vda --fstype=ext4 --label boot   --active --align 1024 --size 64M
 part /     --source rootfs            --ondisk vda --fstype=ext4 --label rootfs --align 1024
 ```
 
-`local.conf`（あとで 8 章の MACHINE に移す）:
+設定は `local.conf` に書かず、`meta-practice-bsp` のフラグメント `practice-bsp/uboot`（`meta-practice-bsp/conf/fragments/uboot.conf`）にまとめる。この節と次の節の設定を、すべてここに書く。8 章で MACHINE を作ったら、MACHINE の設定に移す。
 
 ```
 IMAGE_FSTYPES += "wic"
@@ -103,7 +105,7 @@ U-Boot の標準ブート（bootstd）は `boot.scr` も `extlinux.conf` も探�
 
 カーネルを渡さない設定は `QB_DEFAULT_KERNEL = "none"`（`check_kernel()` は `none` なら何もしない）。meta-yocto-bsp の `genericarm64.conf` が同じ設定をしている（10 章）。
 
-`local.conf`:
+`practice-bsp/uboot` のフラグメントの続き:
 
 ```
 QB_DEFAULT_BIOS = "u-boot.bin"
@@ -120,7 +122,7 @@ QB_ROOTFS_OPT = "-drive id=disk0,file=@ROOTFS@,if=none,format=raw -device virtio
 
 ```sh
 bitbake core-image-minimal
-runqemu qemuarm64 nographic slirp wic
+runqemu nographic slirp wic    # MACHINE の名前は付けない（1 章の 5）
 ```
 
 ## 6. 確かめること

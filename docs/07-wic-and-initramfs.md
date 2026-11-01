@@ -77,7 +77,7 @@ Yocto の initramfs 用イメージ（`meta/recipes-core/images/`）:
 
 ```sh
 bitbake core-image-minimal-initramfs
-runqemu qemuarm64 nographic slirp ramfs core-image-minimal-initramfs
+runqemu nographic slirp ramfs core-image-minimal-initramfs    # MACHINE の名前は付けない（1 章の 5）
 ```
 
 aarch64-boot-lab の `direct`（`-kernel Image -initrd rootfs.img`）に相当する。

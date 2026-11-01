@@ -18,7 +18,7 @@ Yocto Project（Wrynose 6.0 LTS）で QEMU の aarch64 マシン `qemuarm64` 向
 | 空きディスク | 150GB |
 | bitbake-setup | 2.19.0（pip） |
 
-Wrynose の公式の目安は「RAM 32GB、ディスク 140GB」（[System Requirements](https://docs.yoctoproject.org/wrynose/ref-manual/system-requirements.html)）。RAM が足りないので、並列数を 2 に下げてビルドしている（[1 章](docs/01-build-and-runqemu.md) を参照）。
+Wrynose の公式の目安は「RAM 32GB、ディスク 140GB」（[System Requirements](https://docs.yoctoproject.org/wrynose/ref-manual/system-requirements.html)）。RAM が足りないので、並列数を 2 に下げてビルドしている。この条件で、最初の `core-image-minimal` のビルドに 8 時間 12 分、ディスクを 73GB 使った（[1 章](docs/01-build-and-runqemu.md) を参照）。
 
 ## 章
 
@@ -37,17 +37,45 @@ Wrynose の公式の目安は「RAM 32GB、ディスク 140GB」（[System Requi
 | [11](docs/11-raspberrypi4.md) | Raspberry Pi 4（meta-raspberrypi、UART、U-Boot、TF-A、カーネルの版の切り替え） | `--cpu a72`、`tfa-uboot-rootdisk` |
 | [12](docs/12-raspberrypi5.md) | Raspberry Pi 5（Pi 4 との違い） | `--cpu a76` |
 
-2 章以降は下書き（手順はソースを読んで書き、出力はまだ確かめていない）。1 章から順に確かめて書き直す。起動まわりができたら、レシピの書き方・パッケージ・ライセンス・SDK などに進む。
+1 章は実際に動かして確かめた。2 章以降は下書き（手順はソースを読んで書き、出力はまだ確かめていない）。1 章から順に確かめて書き直す。起動まわりができたら、レシピの書き方・パッケージ・ライセンス・SDK などに進む。
+
+## 使い方
+
+```sh
+./setup.sh                    # 環境を作る（何度実行してもよい）
+./build.sh                    # core-image-minimal をビルド（ログは logs/build-*.log）
+./run.sh direct               # runqemu で起動（ログは logs/boot-*.log）。終了はゲストで poweroff
+./run.sh --cpu a72 --smp 1 direct
+. ./env.sh                    # 手で bitbake を打つとき（venv とビルド環境を読み込む）
+```
+
+`./run.sh -h`、`./build.sh -h` でオプションの一覧を表示する。
+
+設定は `local.conf` を手で書き換えず、レイヤーの `conf/fragments/` にフラグメントとして置き、`bitbake-config-build enable-fragment practice/<名前>`（`meta-practice-bsp` なら `practice-bsp/<名前>`）で有効にする。
+
+自作レイヤーは 2 つに分けている。ボードに依存しないもの（DISTRO、イメージ、アプリ）は `meta-practice`、ボードに関するもの（MACHINE、ブートローダー、デバイスツリー）は `meta-practice-bsp`。
 
 ## ディレクトリ構成
 
 ```
 .
-├── README.md
+├── setup.sh              環境を作る（ホストの確認、bitbake-setup init、自作レイヤーの追加）
+├── build.sh              ビルドする（MACHINE を -m で選ぶ）
+├── run.sh                runqemu で起動する（起動方法・イメージ・MACHINE・CPU・CPU 数を選ぶ）
+├── env.sh                source して使う（venv と init-build-env）
+├── meta-practice/        自作レイヤー: ボードに依存しないもの（レイヤー名 practice）
+│   └── conf/
+│       ├── layer.conf
+│       └── fragments/        practice/<名前> として有効にする設定
+├── meta-practice-bsp/    自作レイヤー: ボードに関するもの（レイヤー名 practice-bsp）
+│   └── conf/
+│       ├── layer.conf
+│       └── fragments/        practice-bsp/<名前> として有効にする設定
+├── experiments/          章ごとの実験（準備 → 実行 → 結果を logs/ に保存 → 元に戻す）
 ├── docs/                 章ごとの説明
 ├── logs/                 実行ログ（git 管理外）
 │
-│  ── 以下はセットアップで用意する（git 管理外）──
+│  ── 以下は setup.sh が用意する（git 管理外）──
 ├── bitbake-setup-venv/   bitbake-setup を入れた Python の venv
 └── bitbake-builds/       bitbake-setup の top directory
     ├── site.conf             DL_DIR・SSTATE_DIR（すべての setup で共有）

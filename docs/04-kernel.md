@@ -2,6 +2,8 @@
 
 aarch64-boot-lab では `make defconfig` でビルドし、`.config` を `configs/` に保存した。Yocto では、カーネルを linux-yocto のレシピでビルドし、設定とパッチを 3 章の `meta-practice` に置く。
 
+この章で変える設定（`LOCALVERSION`、`IKCONFIG` など）とパッチは、ボードに依存しないので `meta-practice` に置く。ボードに依存するカーネルの設定は、10 章で `meta-practice-bsp` に置く。
+
 > **下書き**: レシピの中身（版・ブランチ・コミット）はソースで確かめた。手順の出力はまだ確かめていない。
 
 ## 1. Wrynose の linux-yocto
@@ -68,31 +70,54 @@ meta-practice/recipes-kernel/linux/
 ```
 FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 SRC_URI += "file://practice.cfg"
+LINUX_VERSION_EXTENSION = "-practice"
 ```
 
-例として、起動ログで確かめやすい設定を変える:
+例として、起動してから確かめやすい設定を変える:
 
 ```
 # practice.cfg
-CONFIG_LOCALVERSION="-practice"
 CONFIG_IKCONFIG=y
 CONFIG_IKCONFIG_PROC=y
 ```
 
-- `CONFIG_LOCALVERSION`: `uname -r` と起動ログの `Linux version` に付く
 - `CONFIG_IKCONFIG_PROC`: `/proc/config.gz` で、動いているカーネルの設定を読める
+
+### カーネルの名前（`uname -r`）は config fragment では変えられない
+
+1 章で起動したカーネルの `uname -r` は `6.18.54-yocto-standard`。後ろの `-yocto-standard` は `CONFIG_LOCALVERSION` だが、config fragment に `CONFIG_LOCALVERSION="-practice"` と書いても変わらない（はず）。
+
+`kernel-yocto.bbclass` の `do_kernel_configme` は、config fragment を `merge_config.sh` でまとめた**あとで**、レシピの変数 `LINUX_VERSION_EXTENSION` を `.config` の最後に足す。
+
+```
+	if [ ! -z "${LINUX_VERSION_EXTENSION}" ]; then
+		echo "# Global settings from linux recipe" >> ${B}/.config
+		echo "CONFIG_LOCALVERSION="\"${LINUX_VERSION_EXTENSION}\" >> ${B}/.config
+	fi
+```
+
+既定の値は `linux-yocto.inc` にある。
+
+```
+LINUX_VERSION_EXTENSION ??= "-yocto-${LINUX_KERNEL_TYPE}"
+```
+
+- `LINUX_KERNEL_TYPE`（`KTYPE`）はカーネルの種類。qemuarm64 は `standard`。ほかに `tiny`（`linux-yocto-tiny`）、`preempt-rt`（`linux-yocto-rt`）がある
+- `??=` はいちばん弱い既定値なので、bbappend で `LINUX_VERSION_EXTENSION = "-practice"` と書けば変わる（上の bbappend の 3 行目）
+- 空にする（`LINUX_VERSION_EXTENSION = ""`）と、`CONFIG_LOCALVERSION` の行を足さない。そのときは config fragment の `CONFIG_LOCALVERSION` が使われる
 
 ```sh
 bitbake virtual/kernel && bitbake core-image-minimal
-runqemu qemuarm64 nographic slirp
+./run.sh direct
 # ゲストで
 uname -r
-zcat /proc/config.gz | grep LOCALVERSION
+zcat /proc/config.gz | grep LOCALVERSION    # CONFIG_LOCALVERSION="-practice"
 ```
 
 `do_kernel_configcheck` が、fragment に書いた設定が最終的な `.config` に入らなかったときに警告を出す（依存する設定が足りないときなど）。
 
-<!-- TODO: uname -r の結果、configcheck の警告が出るか -->
+<!-- TODO: uname -r の結果（6.18.54-practice になるか）、configcheck の警告が出るか。
+config fragment だけに CONFIG_LOCALVERSION を書いたとき、本当に -yocto-standard のままになるかも確かめる -->
 
 ## 4. パッチを当てる
 
@@ -109,7 +134,7 @@ git commit -am "init: start_kernel でメッセージを出す"
 cd -
 devtool build linux-yocto
 bitbake core-image-minimal
-runqemu qemuarm64 nographic slirp        # dmesg | grep yocto-practice
+./run.sh direct        # dmesg | grep yocto-practice
 devtool finish linux-yocto ../../../meta-practice   # パッチにして meta-practice に書き出す
 ```
 

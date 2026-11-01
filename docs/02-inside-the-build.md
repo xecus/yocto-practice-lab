@@ -149,7 +149,7 @@ cat tmp/deploy/images/qemuarm64/core-image-minimal-qemuarm64.rootfs.manifest
 - `*.qemuboot.conf`: `runqemu` が読む設定（1 章で使った）
 - `Image`: カーネル（aarch64-boot-lab の `arch/arm64/boot/Image` と同じ形式）
 
-<!-- TODO: パッケージの数、ext4 の大きさ、Image の大きさ -->
+大きさとパッケージの数は 1 章の「できたもの」に書いた（manifest は 32 パッケージ、ext4 は展開して 23MB、`Image` は 23MB）。
 
 ## 7. sstate の効果を測る
 
@@ -182,3 +182,25 @@ grep '"busybox.do_compile" ->' task-depends.dot
 ```
 
 <!-- TODO: pn-buildlist の行数、busybox.do_compile が何に依存しているか -->
+
+### なぜ llvm-native がビルドされたか
+
+1 章のビルドで一番時間がかかったのは `llvm-native` と `clang-native`（合わせて 5 時間）だった。イメージには入っていないのに、なぜビルドされたかを依存関係から追う。
+
+```sh
+grep -E '^"[a-z0-9.-]+\.do_[a-z_]+" -> "llvm-native\.' task-depends.dot | cut -d' ' -f1 | sort -u
+bitbake-getvar -r qemu-system-native PACKAGECONFIG
+bitbake-getvar -r mesa-native PACKAGECONFIG
+```
+
+1 章で `bitbake-getvar` を使って確かめたところまで:
+
+```
+qemu-system-native  PACKAGECONFIG: fdt alsa kvm pie slirp png pixman sdl virglrenderer epoxy
+  → mesa-native     PACKAGECONFIG: ... gallium-llvm libclc ...（DEPENDS に llvm-native）
+    → llvm-native, clang-native
+```
+
+<!-- TODO: task-depends.dot で、llvm-native と clang-native に依存しているタスクを確かめる。
+qemu-system-native の virglrenderer・epoxy・sdl を外す（PACKAGECONFIG:remove:pn-qemu-system-native）と llvm が要らなくなるか、
+bitbake -g の pn-buildlist で比べる（実際にビルドし直すかは時間を見て決める） -->

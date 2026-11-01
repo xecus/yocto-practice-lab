@@ -8,19 +8,17 @@ aarch64-boot-lab の `./run.sh direct-debug` と `debug-6.18.gdb` で、カー�
 
 ### QEMU を止めた状態で起動する
 
-`runqemu` に gdb 用のオプションはないので、`qemuparams` で `-s -S` を渡す。`nokaslr` は `bootparams` で渡す。
+`runqemu` に gdb 用のオプションはないので、`qemuparams` で `-s -S` を渡す。`nokaslr` は `bootparams` で渡す。`run.sh` の `direct-debug` がこれをする。
 
 ```sh
 # 端末 1
-runqemu qemuarm64 nographic slirp qemuparams="-s -S" bootparams="nokaslr"
+./run.sh direct-debug    # runqemu ... qemuparams="-s -S" bootparams="nokaslr"
 ```
 
 - `-s`: TCP 1234 番で gdb を待つ
 - `-S`: CPU を止めたまま始める
 - `nokaslr`: aarch64-boot-lab と同じく、`vmlinux` のシンボルと実行時のアドレスを一致させる
-- qemuarm64 は `-smp 4`。aarch64-boot-lab と同じく 1 CPU で追うなら `qemuparams="-s -S -smp 1"`
-
-<!-- TODO: qemuparams の -smp が QB_SMP より優先されるか確かめる -->
+- qemuarm64 は `-smp 4`。aarch64-boot-lab と同じく 1 CPU で追うなら `./run.sh -s 1 direct-debug`（`qemuparams` の `-smp` が `QB_SMP` より優先されることは 1 章の 5 で確かめた）
 
 ### vmlinux
 
@@ -119,10 +117,10 @@ ls tmp/deploy/sdk/
 
 ## 5. 起動ログを残す
 
-aarch64-boot-lab の `run.sh` は、起動ごとに `logs/boot-*.log` を残した。Yocto でも同じように残すスクリプト（`run.sh`）を作る。
+aarch64-boot-lab の `run.sh` と同じく、このリポジトリの `run.sh` も起動ごとに `logs/boot-<起動方法>-<イメージ>-<MACHINE>-<CPU>-smp<数>.log` を残す。中では次を実行している。
 
 ```sh
-runqemu qemuarm64 nographic slirp 2>&1 | tee logs/boot-yocto-direct.log
+runqemu <qemuboot.conf> nographic slirp snapshot [qemuparams=...] [bootparams=...] 2>&1 | tee -a logs/boot-....log
 ```
 
-<!-- TODO: run.sh を作る。起動方法（direct / uboot / tfa）と MACHINE を引数で選べるようにする -->
+`uboot`（5 章）と `tfa`（6 章）は、その章で足す。

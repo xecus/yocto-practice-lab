@@ -39,7 +39,7 @@ meta-arm には、TF-A + U-Boot で起動する MACHINE `qemuarm64-secureboot` �
 ```sh
 bitbake-config-build enable-fragment machine/qemuarm64-secureboot
 bitbake core-image-minimal
-runqemu qemuarm64-secureboot nographic slirp
+runqemu nographic slirp    # MACHINE の名前は付けない（1 章の 5）
 ```
 
 <!-- TODO: fragment で MACHINE を変えられるか確かめる。だめなら local.conf に MACHINE = を書く -->
@@ -89,7 +89,7 @@ aarch64-boot-lab で分かったことと比べる:
 
 aarch64-boot-lab と同じ「TF-A → U-Boot → Linux（EL2）」にするため、qemuarm64-secureboot を元に自分の MACHINE を作る（8 章の MACHINE の先取り）。
 
-`meta-practice/conf/machine/qemuarm64-tfa.conf`（案）:
+`meta-practice-bsp/conf/machine/qemuarm64-tfa.conf`（案）:
 
 ```
 MACHINEOVERRIDES =. "qemuarm64:qemuarm64-secureboot:"
@@ -105,7 +105,7 @@ QB_DEFAULT_BIOS = "flash.bin"
 - OP-TEE は 2 か所から入ってくる。MACHINE の設定だけでは外せない
   - `trusted-firmware-a-qemuarm64-secureboot.inc` が `TFA_SPD` を `=` で `opteed` にする（レシピの中の代入なので、MACHINE の `TFA_SPD = ""` は上書きされる）
   - `trusted-firmware-a_%.bbappend` が、QEMU のマシン（`qemuall`）なら `DEPENDS:append = " optee-os"` と `EXTRA_OEMAKE:append` の `BL32=...` を足す。`qemuarm64-secureboot` を入れなくても、`qemuarm64.conf` を require すれば `qemuall` になるので足される
-- そのため、`meta-practice` に `trusted-firmware-a_%.bbappend` を作り、`TFA_SPD = ""`、`DEPENDS:remove = "optee-os"`、`EXTRA_OEMAKE:remove` で `BL32=...` を消す。`MACHINE_FEATURES` からは `optee-ftpm` を外す
+- そのため、`meta-practice-bsp` に `trusted-firmware-a_%.bbappend` を作り、`TFA_SPD = ""`、`DEPENDS:remove = "optee-os"`、`EXTRA_OEMAKE:remove` で `BL32=...` を消す。`MACHINE_FEATURES` からは `optee-ftpm` を外す
 - `virtualization=on` を足して、Linux が EL2 で動くかを見る
 
 <!-- TODO: この案で動くか確かめる。OVERRIDES の書き方は試して直す -->

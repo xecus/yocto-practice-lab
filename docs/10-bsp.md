@@ -35,14 +35,43 @@ bitbake -e core-image-minimal | grep -E '^(DEFAULTTUNE|PREFERRED_PROVIDER_virtua
 
 分けておくと、ボードを変えても DISTRO とアプリはそのまま使える。11・12 章で、`meta-practice` を変えずに MACHINE だけ変えて確かめる。
 
-## 3. genericarm64 を QEMU で起動する
+`meta-practice-bsp` には、5〜8 章で QEMU の「架空のボード」の BSP をすでに入れてある（U-Boot のブートスクリプト、wks、TF-A の設定、CPU ごとの MACHINE）。
+
+## 3. QEMU の BSP
+
+QEMU 向けの BSP（qemuarm64）は openembedded-core に最初から入っている。実機の BSP と同じ部品があり、中身が QEMU 向けになっている。
+
+| 部品 | Raspberry Pi 4 | qemuarm64 |
+|---|---|---|
+| MACHINE の設定 | `raspberrypi4-64.conf`（meta-raspberrypi） | `qemuarm64.conf` + `qemu.inc`（openembedded-core） |
+| カーネル | linux-raspberrypi | linux-yocto（`KBRANCH:qemuarm64`、`COMPATIBLE_MACHINE`） |
+| デバイスツリー | BSP が持つ（`bcm2711-rpi-4-b.dtb`） | **持たない**。QEMU が起動時に作る |
+| ブートローダー | GPU のファームウェア + armstub | なし（`-kernel`）。U-Boot は任意 |
+| 書き込み・起動 | SD カードに wic を書いて電源を入れる | **`QB_*` の変数** → `qemuboot.conf` → `runqemu` |
+
+## 4. 自分の BSP にデバイスツリーとカーネルの設定を足す
+
+`meta-practice-bsp` に、実機の BSP が持つものを足す。
+
+```
+meta-practice-bsp/
+├── conf/machine/practice-virt.conf     QB_DTB で自分のデバイスツリーを渡す
+├── recipes-kernel/linux/
+│   ├── linux-yocto_%.bbappend          COMPATIBLE_MACHINE、KMACHINE
+│   └── files/practice-virt.scc         linux-yocto の BSP の記述（設定の断片をまとめる）
+└── recipes-bsp/device-tree/            aarch64-boot-lab の virt.dts に部品を 1 つ足したもの
+```
+
+<!-- TODO: QB_DTB で渡したデバイスツリーで起動できるか。足した部品が /proc/device-tree に見えるか -->
+
+## 5. genericarm64 を QEMU で起動する
 
 SystemReady 向けの汎用 BSP。1 つのイメージを、UEFI を持つ多くのボードで動かす考え方。
 
 ```sh
 bitbake-config-build enable-fragment machine/genericarm64
 bitbake core-image-minimal
-runqemu genericarm64 nographic slirp
+runqemu nographic slirp    # MACHINE の名前は付けない（1 章の 5）
 ```
 
 `genericarm64.conf` の QEMU の設定は、5 章で使うもの（U-Boot から起動し、`QB_DEFAULT_KERNEL = "none"` で `-kernel` を渡さない）と同じ。

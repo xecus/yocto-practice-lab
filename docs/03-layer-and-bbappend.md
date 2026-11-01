@@ -1,6 +1,13 @@
 # 3 章: 自作レイヤーと bbappend の最小限
 
-4 章以降でカーネル・U-Boot・TF-A を変えるときに使う、自作レイヤー `meta-practice` を作る。
+4 章以降で使う自作レイヤーを 2 つ作る。
+
+| レイヤー | レイヤー名 | 置くもの | 使い始める章 |
+|---|---|---|---|
+| `meta-practice` | `practice` | ボードに依存しないもの（BusyBox などの設定、イメージ、DISTRO、カーネルの共通の設定） | 3 章 |
+| `meta-practice-bsp` | `practice-bsp` | ボード（ハードウェア）に関するもの（MACHINE、`QB_*`、U-Boot・TF-A の設定、ブートスクリプト、wks、デバイスツリー） | 5 章 |
+
+分けておくと、ボードを替えるときに `meta-practice` に手を入れなくて済む（10〜12 章で確かめる）。
 既存のレシピに手を入れる `bbappend` と、変数の書き方（`:append` など）を、`bitbake -e` で確かめながら身につける。
 
 aarch64-boot-lab の `configs/` に `.config` を保存して管理していたのに相当する。Yocto では、レシピは直接書き換えず、自分のレイヤーに差分を置く。
@@ -15,9 +22,14 @@ aarch64-boot-lab の `configs/` に `.config` を保存して管理していた�
 cd bitbake-builds/poky-wrynose/build
 . ./init-build-env
 bitbake-layers create-layer ../../../meta-practice
-bitbake-layers add-layer ../../../meta-practice
+bitbake-layers create-layer ../../../meta-practice-bsp
+bitbake-layers add-layer ../../../meta-practice ../../../meta-practice-bsp
 bitbake-layers show-layers
 ```
+
+このリポジトリには、できあがった 2 つのレイヤーが入っていて、`./setup.sh` が追加する。ここでは、作り方を使い捨てのレイヤーで試す。
+
+<!-- TODO: create-layer が作るレイヤー名（BBFILE_COLLECTIONS）がディレクトリ名から meta- を除いたものになるか確かめる（practice-bsp になるか） -->
 
 できるもの:
 
@@ -94,7 +106,7 @@ bitbake-layers show-appends busybox
 bitbake busybox
 grep CONFIG_TREE tmp/work/cortexa57-poky-linux/busybox/1.37.0/sources/busybox-1.37.0/.config
 bitbake core-image-minimal
-runqemu qemuarm64 nographic slirp    # 起動して tree を実行する
+./run.sh direct    # 起動して tree を実行する
 ```
 
 <!-- TODO: show-appends の出力、.config の変化、起動して tree が動くこと -->

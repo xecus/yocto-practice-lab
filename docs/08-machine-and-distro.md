@@ -1,6 +1,6 @@
 # 8 章: 独自の MACHINE と DISTRO
 
-5〜7 章で `local.conf` に書いた設定を、自分の MACHINE と DISTRO にまとめる。
+5〜7 章でフラグメントに書いた設定を、自分の MACHINE と DISTRO にまとめる。MACHINE は `meta-practice-bsp`、DISTRO は `meta-practice` に置く。
 aarch64-boot-lab の `select-cpu.sh`（CPU を cortex-a53 / a55 / a72 / a76 / a710 から選ぶ）を、MACHINE の切り替えで再現する。
 
 > **下書き**: qemuarm64.conf の中身はソースで確かめた。自分の MACHINE・DISTRO はまだ書いていない。
@@ -38,10 +38,10 @@ QB_SMP ?= "-smp 4"
 
 ## 3. 自分の MACHINE を作る
 
-`meta-practice/conf/machine/` に、aarch64-boot-lab の CPU に合わせた MACHINE を作る。
+`meta-practice-bsp/conf/machine/` に、aarch64-boot-lab の CPU に合わせた MACHINE を作る。中身は QEMU の「架空のボード」の BSP。
 
 ```
-# meta-practice/conf/machine/practice-a72.conf（案）
+# meta-practice-bsp/conf/machine/practice-a72.conf（案）
 require conf/machine/qemuarm64.conf
 MACHINEOVERRIDES =. "qemuarm64:"
 
@@ -93,10 +93,10 @@ bitbake core-image-minimal 2>&1 | grep 'Sstate summary'
 QEMU の CPU（`QB_CPU`）だけ変えるなら、ビルドし直しは不要。
 
 ```sh
-runqemu qemuarm64 nographic slirp qemuparams="-cpu cortex-a76"
+./run.sh -c a76 direct    # runqemu ... qemuparams="-cpu cortex-a76"
 ```
 
-<!-- TODO: qemuparams の -cpu が QB_CPU より優先されるか確かめる -->
+`qemuparams` の `-cpu` が `QB_CPU` より優先されることは、1 章の 5 で確かめた。
 
 ## 5. CPU による違いを確かめる
 
